@@ -4,6 +4,7 @@ from threading import Lock
 import pickle as pickle
 import json as json
 import math as math
+from os import remove
 
 adcpLock = Lock()
 adcpDBPath = "data/adcp_db.pickle"
@@ -18,20 +19,26 @@ def adcpReadDB():
 
 adcpReadDB()
 
+def adcpAcquireLock():
+	global adcpLock
+	while not adcpLock.acquire():
+		pass
+
+def adcpReleaseLock():
+	global adcpLock
+	adcpLock.release()
+
 def adcpWriteDB(acquireLock=True):
 	global adcpDB
-	
 	if acquireLock:
-		while not adcpLock.acquire():
-			pass
-	
+		adcpAcquireLock()
 	try:
 		pickle.dump(adcpDB, open(adcpDBPath, "wb"))
 	except:
 		pass
-	
 	if acquireLock:
-		adcpLock.release()
+		adcpReleaseLock()
+		
 
 def adcpUpdateDB(station, nBins, startDepth, firstBinHeight, binHeight):
 	global adcpDB
@@ -43,6 +50,21 @@ def adcpUpdateDB(station, nBins, startDepth, firstBinHeight, binHeight):
 	adcpDB[station]["binHeight"] = binHeight
 	adcpWriteDB()
 
+def adcpIsInDB(station):
+	return (station in adcpDB)
+
+def adcpDeleteFromDB(station, acquireLock=True):
+	global adcpDB
+	if not adcpIsInDB(station):
+		return False
+	if acquireLock:
+		adcpAcquireLock()
+	del adcpDB[station]
+	adcpWriteDB(False)
+	if acquireLock:
+		adcpReleaseLock()
+	
+
 
 def adcpGetFileName(station):
 	return "data/adcp-dirmag-{}.npy".format(station)
@@ -50,6 +72,16 @@ def adcpGetFileName(station):
 def adcpStore(station, dataSet):
 	#TODO: Error handling, return True/False
 	dataSet.tofile(adcpGetFileName(station))
+	return True
+
+def adcpDelete(station):
+	adcpAcquireLock()
+	adcpDeleteFromDB(station, False)
+	try:
+		remove(adcpGetFileName(station))
+	except:
+		pass
+	adcpReleaseLock()
 	return True
 
 # import dirmag
