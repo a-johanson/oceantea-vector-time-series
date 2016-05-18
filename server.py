@@ -1,11 +1,14 @@
 from flask import Flask
 from timeseries import timeseriesAPI
+from upload import uploadAPI
 
 
 app = Flask(__name__)
+app.config["MAX_CONTENT_LENGTH"] = 120 * 1024 * 1024 # 120 MB
 app.debug = True
 
 app.register_blueprint(timeseriesAPI, url_prefix="/timeseries")
+app.register_blueprint(uploadAPI, url_prefix="/upload")
 
 
 if __name__ == '__main__':
