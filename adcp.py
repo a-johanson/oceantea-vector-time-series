@@ -1,4 +1,5 @@
 import numpy as np
+#import pandas as pandas
 from io import BytesIO
 from threading import Lock
 import pickle as pickle
@@ -87,9 +88,20 @@ def adcpDelete(station):
 # import dirmag
 def adcpImport(station, startDepth, firstBinHeight, binHeight, csvBytes):
 	#TODO: Error handling
-	dataSet = np.genfromtxt(BytesIO(csvBytes), delimiter=",", skip_header=1)
+	#dataSet = pandas.read_csv(BytesIO(csvBytes), encoding="utf-8", comment="#", sep=",")
+	f = BytesIO(csvBytes)
+	header = ""
+	while True:
+		header = f.readline().decode("utf-8")
+		if len(header) <= 0 or header[0]!='#': break
+	print(header)
+	dataSet = np.genfromtxt(f, delimiter=",", comments="#", dtype=float)
+	#print(dataSet)
+	print(dataSet.shape)
+	if len(dataSet.shape) <= 1:
+		return False
 	nCols = dataSet.shape[1]
-	print(nCols)
+	#print(nCols)
 	if nCols < 3 or nCols%2 != 1:
 		return False
 	nBins = (nCols-1)/2
