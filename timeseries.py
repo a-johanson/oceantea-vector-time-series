@@ -6,7 +6,7 @@ from flask import abort
 #import scipy as sp
 from io import BytesIO
 #from threading import Lock
-import adcp as adcp
+import db as adcp
 
 timeseriesAPI = Blueprint("timeseriesAPI", __name__)
 

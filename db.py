@@ -11,6 +11,9 @@ adcpLock = Lock()
 adcpDBPath = "data/adcp_db.pickle"
 adcpDB = {}
 
+def adcpGetDBKey(station, dataType, depth):
+	return "adcp-{}-{}-{}".format(station, dataType, depth)
+
 def adcpReadDB():
 	global adcpDB
 	try:
@@ -41,6 +44,7 @@ def adcpWriteDB(acquireLock=True):
 		adcpReleaseLock()
 		
 
+#TODO: UPDATEEE
 def adcpUpdateDB(station, nBins, startDepth, firstBinHeight, binHeight):
 	global adcpDB
 	if not (station in adcpDB):
@@ -67,12 +71,12 @@ def adcpDeleteFromDB(station, acquireLock=True):
 	
 
 
-def adcpGetFileName(station):
-	return "data/adcp-dirmag-{}.npy".format(station)
+def adcpGetFileName(station, dataType, depth):
+	return "data/adcp-{}-{}-{}.npy".format(station, dataType, depth)
 	
-def adcpStore(station, dataSet):
+def adcpStore(metadata, dataSet):
 	#TODO: Error handling, return True/False
-	dataSet.tofile(adcpGetFileName(station))
+	dataSet.tofile(adcpGetFileName(metadata["station"], "dirmag", metadata["depth"]))
 	return True
 
 def adcpDelete(station):
@@ -86,16 +90,15 @@ def adcpDelete(station):
 	return True
 
 # import dirmag
-def adcpImport(station, startDepth, firstBinHeight, binHeight, csvBytes):
+def adcpImport(csvFile, metadata):
 	#TODO: Error handling
-	#dataSet = pandas.read_csv(BytesIO(csvBytes), encoding="utf-8", comment="#", sep=",")
-	f = BytesIO(csvBytes)
 	header = ""
 	while True:
-		header = f.readline().decode("utf-8")
-		if len(header) <= 0 or header[0]!='#': break
+		header = csvFile.readline().decode("utf-8")
+		if len(header) <= 0 or header[0]!='#':
+			break
 	print(header)
-	dataSet = np.genfromtxt(f, delimiter=",", comments="#", dtype=float)
+	dataSet = np.genfromtxt(csvFile, delimiter=",", comments="#", dtype=float)
 	#print(dataSet)
 	print(dataSet.shape)
 	if len(dataSet.shape) <= 1:
@@ -105,8 +108,9 @@ def adcpImport(station, startDepth, firstBinHeight, binHeight, csvBytes):
 	if nCols < 3 or nCols%2 != 1:
 		return False
 	nBins = (nCols-1)/2
-	if adcpStore(station, dataSet):
-		adcpUpdateDB(station, nBins, startDepth, firstBinHeight, binHeight)
+	metadata["nBins"] = nBins 
+	if adcpStore(metadata, dataSet):
+		adcpUpdateDB(metadata)
 		return True
 	return False
 	
@@ -133,4 +137,8 @@ def adcpGetJSONSeries(station, depth):
 	result[:,[0,2,3]] = dataSet[:, [0, 1+iBin, 1+adcpDB[station]["nBins"]+iBin]]
 	result[:,1] = depth 
 	return json.dumps({"data": result.tolist()})
+
+
+def getStationsDB():
+	return {}
 
