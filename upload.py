@@ -1,9 +1,6 @@
 from flask import Blueprint
-from flask import Response
 from flask import request
 from flask import jsonify
-from flask import abort
-
 import re as re
 
 import db as db
@@ -31,8 +28,6 @@ def isFloat(str, min, max):
 @uploadAPI.route("/", methods=["POST"])
 @uploadAPI.route("", methods=["POST"])
 def uploadADCPData():
-	
-	
 	if not ("dataFile" in request.files and \
 	"timeSeriesType" in request.form and \
 	"station" in request.form and \
@@ -71,6 +66,7 @@ def uploadADCPData():
 	
 	metadata = {
 		"station": request.form["station"],
+		"dataType": "dirmag",
 		"depth": int(request.form["depth"]),
 		"t_reference": dateMatch.group(1) + "T" + dateMatch.group(2) + "Z",
 		"adcpFirstBinHeight": float(request.form["adcpFirstBinHeight"]),
@@ -106,10 +102,9 @@ def uploadADCPData():
 
 	metadata["tsType"] = request.form["timeSeriesType"]
 	
-	
-	print("test" in request.form)
-	#print(request.form["test"])
-	print(metadata)
-	#print(csvFile.readline().decode("utf-8"))
-	result = db.adcpImport(csvFile, metadata)
+	result = db.adcpImport(csvFile.stream, metadata)
+	try:
+		csvFile.close()
+	except:
+		pass
 	return jsonify(success=result, message="Time series added successfully" if result else "Could not parse/store time series data"), 200 if result else 500
