@@ -143,7 +143,7 @@ def adcpGetJSONSeries(station, dataType, startDepth, depth):
 	
 	dataSet = adcpLoad(station, dataType, startDepth, 1 + 2*adcpDB[key]["nBins"])
 	result = np.empty((dataSet.shape[0], 4))
-	result[:,[0,2,3]] = dataSet[:, [0, 1+iBin, 1+adcpDB[key]["nBins"]+iBin]]
+	result[:,[0,2,3]] = np.nan_to_num(dataSet[:, [0, 1+iBin, 1+adcpDB[key]["nBins"]+iBin]])
 	result[:,1] = depth 
 	return json.dumps({"data": result.tolist()})
 

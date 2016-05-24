@@ -24,7 +24,7 @@ def getTimeseries():
 		return Response(response=json.dumps({
 			"datatypes": {"dirmag": {
 				"printName": "DirMag",
-				"unit": "???"
+				"unit": "?"
 				}
 			},
 			"regions": {},
