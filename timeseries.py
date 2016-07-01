@@ -23,8 +23,8 @@ def getTimeseries():
 	if "includeAggregatedMetadata" in request.args:
 		return Response(response=json.dumps({
 			"datatypes": {"dirmag": {
-				"printName": "DirMag",
-				"unit": "?"
+				"printName": "Water Flow",
+				"unit": "mm/s"
 				}
 			},
 			"regions": {},
