@@ -11,8 +11,8 @@ adcpLock = Lock()
 adcpDBPath = "data/adcp_db.pickle"
 adcpDB = {}
 
-def adcpGetDBKey(station, dataType, depth):
-	return "adcp-{}-{}-{}".format(station, dataType, depth)
+def adcpGetDBKey(station, dataType, depth, direction):
+	return "adcp-{}-{}-{}-{}".format(station, dataType, depth, direction)
 
 def adcpReadDB():
 	global adcpDB
@@ -51,13 +51,13 @@ def adcpWriteDB(acquireLock=True):
 
 def adcpAddToDB(metadata):
 	global adcpDB
-	key = adcpGetDBKey(metadata["station"], metadata["dataType"], metadata["depth"])
+	key = adcpGetDBKey(metadata["station"], metadata["dataType"], metadata["depth"], , metadata["adcpDirection"])
 	adcpDB[key] = metadata
 	adcpWriteDB()
 
-def adcpDeleteFromDB(station, dataType, depth, acquireLock=True):
+def adcpDeleteFromDB(station, dataType, depth, direction, acquireLock=True):
 	global adcpDB
-	key = adcpGetDBKey(station, dataType, depth)
+	key = adcpGetDBKey(station, dataType, depth, direction)
 	if not (key in adcpDB):
 		return False
 	if acquireLock:
@@ -132,7 +132,10 @@ def adcpLoad(station, dataType, depth, nCols):
 
 def adcpGetJSONSeries(station, dataType, startDepth, depth):
 	global adcpDB
-	key = adcpGetDBKey(station, dataType, startDepth)
+	dirSign = 1.0 if depth <= startDepth else -1.0
+	direction = "up" if dirSign > 0.0 else "down"
+	# TODO: Continue up/down!
+	key = adcpGetDBKey(station, dataType, startDepth, direction)
 	if not (key in adcpDB):
 		return json.dumps({"data":[]})
 	

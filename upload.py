@@ -37,6 +37,7 @@ def uploadADCPData():
 	"longitude" in request.form and \
 	"region" in request.form and \
 	"device" in request.form and \
+	"adcpDirection" in request.form and \
 	"adcpFirstBinHeight" in request.form and \
 	"adcpBinHeight" in request.form):
 		return getFailureResponse("Too few form parameters")
@@ -52,6 +53,9 @@ def uploadADCPData():
 	
 	if not isInt(request.form["depth"]):
 		return getFailureResponse("Depth is mal-formatted")
+	
+	if request.form["adcpDirection"] != "up" and request.form["adcpDirection"] != "down":
+		return getFailureResponse("ADCP direction must be up or down")
 	
 	if not isFloat(request.form["adcpFirstBinHeight"], 0.0, 100000.0):
 		return getFailureResponse("First bin height is mal-formatted")
@@ -69,6 +73,7 @@ def uploadADCPData():
 		"dataType": "dirmag",
 		"depth": int(request.form["depth"]),
 		"t_reference": dateMatch.group(1) + "T" + dateMatch.group(2) + "Z",
+		"adcpDirection": float(request.form["adcpDirection"]),
 		"adcpFirstBinHeight": float(request.form["adcpFirstBinHeight"]),
 		"adcpBinHeight": float(request.form["adcpBinHeight"])
 	}
