@@ -1,5 +1,18 @@
+# Copyright 2016 Arne Johanson
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import numpy as np
-#import pandas as pandas
 from io import BytesIO
 from threading import Lock
 import pickle as pickle
@@ -90,7 +103,6 @@ def adcpDelete(station, dataType, depth, direction):
 	adcpReleaseLock()
 	return True
 
-# import dirmag
 def adcpImport(csvFile, metadata):
 	header = ""
 	while True:
@@ -100,17 +112,13 @@ def adcpImport(csvFile, metadata):
 			return False
 		if len(header) <= 0 or header[0]!='#':
 			break
-	#print(header)
 	try:
 		dataSet = np.genfromtxt(csvFile, delimiter=",", comments="#", dtype=float, invalid_raise=True)
 	except:
 		return False
-	#print(dataSet)
-	#print(dataSet.shape)
 	if len(dataSet.shape) <= 1:
 		return False
 	nCols = dataSet.shape[1]
-	#print(nCols)
 	if nCols < 3 or nCols%2 != 1:
 		return False
 	nBins = (nCols-1)/2
