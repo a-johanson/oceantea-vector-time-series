@@ -73,7 +73,7 @@ def uploadADCPData():
 		"dataType": "dirmag",
 		"depth": int(request.form["depth"]),
 		"t_reference": dateMatch.group(1) + "T" + dateMatch.group(2) + "Z",
-		"adcpDirection": float(request.form["adcpDirection"]),
+		"adcpDirection": request.form["adcpDirection"],
 		"adcpFirstBinHeight": float(request.form["adcpFirstBinHeight"]),
 		"adcpBinHeight": float(request.form["adcpBinHeight"])
 	}

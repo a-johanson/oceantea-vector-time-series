@@ -51,7 +51,7 @@ def adcpWriteDB(acquireLock=True):
 
 def adcpAddToDB(metadata):
 	global adcpDB
-	key = adcpGetDBKey(metadata["station"], metadata["dataType"], metadata["depth"], , metadata["adcpDirection"])
+	key = adcpGetDBKey(metadata["station"], metadata["dataType"], metadata["depth"], metadata["adcpDirection"])
 	adcpDB[key] = metadata
 	adcpWriteDB()
 
@@ -69,21 +69,21 @@ def adcpDeleteFromDB(station, dataType, depth, direction, acquireLock=True):
 	
 
 
-def adcpGetFileName(station, dataType, depth):
-	return "data/adcp-{}-{}-{}.npy".format(station, dataType, depth)
+def adcpGetFileName(station, dataType, depth, direction):
+	return "data/adcp-{}-{}-{}-{}.npy".format(station, dataType, depth, direction)
 	
 def adcpStore(metadata, dataSet):
 	try:
-		dataSet.tofile(adcpGetFileName(metadata["station"], metadata["dataType"], metadata["depth"]))
+		dataSet.tofile(adcpGetFileName(metadata["station"], metadata["dataType"], metadata["depth"], metadata["adcpDirection"]))
 		return True
 	except:
 		return False
 
-def adcpDelete(station, dataType, depth):
+def adcpDelete(station, dataType, depth, direction):
 	adcpAcquireLock()
-	adcpDeleteFromDB(station, dataType, depth, False)
+	adcpDeleteFromDB(station, dataType, depth, direction, False)
 	try:
-		remove(adcpGetFileName(station, dataType, depth))
+		remove(adcpGetFileName(station, dataType, depth, direction))
 	except:
 		adcpReleaseLock()
 		return False
@@ -100,13 +100,13 @@ def adcpImport(csvFile, metadata):
 			return False
 		if len(header) <= 0 or header[0]!='#':
 			break
-	print(header)
+	#print(header)
 	try:
 		dataSet = np.genfromtxt(csvFile, delimiter=",", comments="#", dtype=float, invalid_raise=True)
 	except:
 		return False
 	#print(dataSet)
-	print(dataSet.shape)
+	#print(dataSet.shape)
 	if len(dataSet.shape) <= 1:
 		return False
 	nCols = dataSet.shape[1]
@@ -114,7 +114,7 @@ def adcpImport(csvFile, metadata):
 	if nCols < 3 or nCols%2 != 1:
 		return False
 	nBins = (nCols-1)/2
-	metadata["nBins"] = nBins 
+	metadata["nBins"] = int(nBins) 
 	if adcpStore(metadata, dataSet):
 		adcpAddToDB(metadata)
 		return True
@@ -122,31 +122,30 @@ def adcpImport(csvFile, metadata):
 
 
 	
-def adcpLoad(station, dataType, depth, nCols):
-	fileName = adcpGetFileName(station, dataType, depth)
+def adcpLoad(station, dataType, depth, direction, nCols):
+	fileName = adcpGetFileName(station, dataType, depth, direction)
 	try:
-		return np.fromfile(fileName).reshape((-1, nCols))
+		return np.fromfile(fileName).reshape((-1, int(nCols)))
 	except:
 		return np.zeros((1, nCols))
 	
 
 def adcpGetJSONSeries(station, dataType, startDepth, depth):
 	global adcpDB
-	dirSign = 1.0 if depth <= startDepth else -1.0
+	dirSign = 1.0 if depth <= float(startDepth) else -1.0
 	direction = "up" if dirSign > 0.0 else "down"
-	# TODO: Continue up/down!
 	key = adcpGetDBKey(station, dataType, startDepth, direction)
 	if not (key in adcpDB):
 		return json.dumps({"data":[]})
 	
-	distance = adcpDB[key]["depth"] - depth
-	iBin = math.ceil(max(distance - adcpDB[key]["adcpFirstBinHeight"], 0.0) / adcpDB[key]["adcpBinHeight"])
+	distance = dirSign*(adcpDB[key]["depth"] - depth)
+	iBin = int(math.ceil(max(distance - adcpDB[key]["adcpFirstBinHeight"], 0.0) / adcpDB[key]["adcpBinHeight"]))
 	if iBin >= adcpDB[key]["nBins"] or distance < 0.0:
 		return json.dumps({"data":[]})
 	
-	dataSet = adcpLoad(station, dataType, startDepth, 1 + 2*adcpDB[key]["nBins"])
+	dataSet = adcpLoad(station, dataType, startDepth, direction, 1 + 2*adcpDB[key]["nBins"])
 	result = np.empty((dataSet.shape[0], 4))
-	result[:,[0,2,3]] = np.nan_to_num(dataSet[:, [0, 1+iBin, 1+adcpDB[key]["nBins"]+iBin]])
+	result[:,[0,2,3]] = np.nan_to_num(dataSet[:, [0, int(1+iBin), int(1+adcpDB[key]["nBins"]+iBin)]])
 	result[:,1] = depth 
 	return json.dumps({"data": result.tolist()})
 

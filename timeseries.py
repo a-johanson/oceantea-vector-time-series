@@ -18,7 +18,13 @@ def getTimeseries():
 	timeseries = []
 	tsDB = db.getTSDB()
 	for ts in tsDB:
-		timeseries.append(tsDB[ts])
+		alreadyExists = False
+		for ats in timeseries:
+			if ats["station"] == tsDB[ts]["station"] and ats["dataType"] == tsDB[ts]["dataType"] and ats["depth"] == tsDB[ts]["depth"]:
+				alreadyExists = True
+				break
+		if not alreadyExists:
+			timeseries.append(tsDB[ts])
 	
 	if "includeAggregatedMetadata" in request.args:
 		return Response(response=json.dumps({
@@ -42,16 +48,24 @@ def isInt(str):
 	except ValueError:
 		return False
 
-def tsParametersAreValid(station, dataType, depth):
+def tsParametersAreValid(station, dataType, depth, direction=None):
 	stationRE = re.compile(r"^[A-Za-z0-9\-]+$")
 	dataTypeRE = re.compile(r"^[A-Za-z0-9\-_]+$")
-	return (stationRE.match(station) and dataTypeRE.match(dataType) and isInt(depth))
+	validDir = (direction is None) or (direction=="up" or direction=="down")
+	return (stationRE.match(station) and dataTypeRE.match(dataType) and isInt(depth) and validDir)
 
-@timeseriesAPI.route("/adcp/<station>/<dataType>/<depth>", methods=["DELETE"])
-def deleteADCPData(station, dataType, depth):
+
+@timeseriesAPI.route("/adcp/<station>/<dataType>/<depth>", defaults={"direction": None}, methods=["DELETE"])
+@timeseriesAPI.route("/adcp/<station>/<dataType>/<depth>/<direction>", methods=["DELETE"])
+def deleteADCPData(station, dataType, depth, direction):
 	result = False
-	if tsParametersAreValid(station, dataType, depth):
-		result = db.adcpDelete(station, dataType, depth)
+	if tsParametersAreValid(station, dataType, depth, direction):
+		if direction is None:
+			resultUp = db.adcpDelete(station, dataType, depth, "up")
+			resultDown = db.adcpDelete(station, dataType, depth, "down")
+			result = bool(resultUp or resultDown)
+		else:
+			result = db.adcpDelete(station, dataType, depth, direction)
 	return Response(response=json.dumps({"success": result}), status=200 if result else 500, mimetype="application/json")
 
 
