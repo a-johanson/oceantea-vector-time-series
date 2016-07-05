@@ -19,6 +19,7 @@ import pickle as pickle
 import json as json
 import math as math
 from os import remove
+import os.path
 
 adcpLock = Lock()
 adcpDBPath = "data/adcp_db.pickle"
@@ -86,8 +87,11 @@ def adcpGetFileName(station, dataType, depth, direction):
 	return "data/adcp-{}-{}-{}-{}.npy".format(station, dataType, depth, direction)
 	
 def adcpStore(metadata, dataSet):
+	fileName = adcpGetFileName(metadata["station"], metadata["dataType"], metadata["depth"], metadata["adcpDirection"])
+	if os.path.isfile(fileName):
+		return False
 	try:
-		dataSet.tofile(adcpGetFileName(metadata["station"], metadata["dataType"], metadata["depth"], metadata["adcpDirection"]))
+		dataSet.tofile(fileName)
 		return True
 	except:
 		return False
