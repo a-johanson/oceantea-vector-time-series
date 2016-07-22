@@ -27,6 +27,8 @@ timeseriesAPI = Blueprint("timeseriesAPI", __name__)
 
 @timeseriesAPI.route("/", methods=["GET"])
 @timeseriesAPI.route("", methods=["GET"])
+@timeseriesAPI.route("/adcp/", methods=["GET"])
+@timeseriesAPI.route("/adcp", methods=["GET"])
 def getTimeseries():
 	timeseries = []
 	tsDB = db.getTSDB()
