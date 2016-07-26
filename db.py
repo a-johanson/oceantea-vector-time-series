@@ -162,6 +162,29 @@ def adcpGetJSONSeries(station, dataType, startDepth, depth):
 	return json.dumps({"data": result.tolist()})
 
 
+def adcpGetJSONTimestamps(station, dataType, depth, direction):
+	global adcpDB
+	key = adcpGetDBKey(station, dataType, depth, direction)
+	if not (key in adcpDB):
+		return json.dumps({"data":[]})
+	
+	dataSet = adcpLoad(station, dataType, depth, direction, 1 + 2*adcpDB[key]["nBins"])
+	return json.dumps({"data": dataSet[:,0].tolist()})
+
+
+def adcpGetJSONColumn(station, dataType, depth, direction, timestamp):
+	global adcpDB
+	key = adcpGetDBKey(station, dataType, depth, direction)
+	if not (key in adcpDB):
+		return json.dumps({"data":[]})
+	
+	# TODO: Caching will become necessary because loading the npy file each time is probably too slow.
+	dataSet = adcpLoad(station, dataType, depth, direction, 1 + 2*adcpDB[key]["nBins"])
+	index = np.searchsorted(dataSet[:,0], timestamp, side="left")
+	if index >= dataSet.shape[0]:
+		index = dataSet.shape[0] - 1
+	return json.dumps({"data": np.nan_to_num(dataSet[index,:]).tolist()})
+
 
 def getStationsDB():
 	return {}

@@ -37,6 +37,7 @@ def getTimeseries():
 		for ats in timeseries:
 			if ats["station"] == tsDB[ts]["station"] and ats["dataType"] == tsDB[ts]["dataType"] and ats["depth"] == tsDB[ts]["depth"]:
 				alreadyExists = True
+				ats["adcpHasUpAndDown"] = True
 				break
 		if not alreadyExists:
 			timeseries.append(tsDB[ts])
@@ -105,3 +106,26 @@ def getADCPSeries(station, dataType, depth):
 		status=200, \
 		mimetype="application/json")
 	return resp
+
+
+@timeseriesAPI.route("/adcp/<station>/<dataType>/<depth>/<direction>/<timestamp>", methods=["GET"])
+def getADCPTimestamps(station, dataType, depth, direction, timestamp):
+	if not tsParametersAreValid(station, dataType, depth, direction):
+		return jsonify(data=[])
+
+	if timestamp == "timestamps":
+		resp = Response(response=db.adcpGetJSONTimestamps(station, dataType, depth, direction), \
+			status=200, \
+			mimetype="application/json")
+		return resp
+	
+	try:
+		t = float(timestamp)
+	except:
+		return jsonify(data=[])
+	
+	resp = Response(response=db.adcpGetJSONColumn(station, dataType, depth, direction, t), \
+		status=200, \
+		mimetype="application/json")
+	return resp
+
