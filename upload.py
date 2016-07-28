@@ -15,9 +15,9 @@
 from flask import Blueprint
 from flask import request
 from flask import jsonify
-import re as re
+import re
 
-import db as db
+import db
 
 uploadAPI = Blueprint("uploadAPI", __name__)
 

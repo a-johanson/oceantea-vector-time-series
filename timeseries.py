@@ -17,10 +17,11 @@ from flask import Response
 from flask import request
 from flask import jsonify
 from io import BytesIO
-import json as json
-import re as re
+import json
+import re
+import copy
 
-import db as db
+import db
 
 timeseriesAPI = Blueprint("timeseriesAPI", __name__)
 
@@ -38,7 +39,7 @@ def getTimeseries():
 				ats["adcpHasUpAndDown"] = True
 				break
 		if not alreadyExists:
-			timeseries.append(tsDB[ts])
+			timeseries.append(copy.copy(tsDB[ts]))
 	
 	if "includeAggregatedMetadata" in request.args:
 		return Response(response=json.dumps({
