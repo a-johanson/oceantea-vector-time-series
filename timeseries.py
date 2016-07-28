@@ -26,6 +26,12 @@ import db
 timeseriesAPI = Blueprint("timeseriesAPI", __name__)
 
 
+def getNotFoundResponse():
+	return Response(response="Not found!", \
+		status=404, \
+		mimetype="text/plain")
+
+
 @timeseriesAPI.route("/", methods=["GET"])
 @timeseriesAPI.route("", methods=["GET"])
 def getTimeseries():
@@ -121,21 +127,18 @@ def getADCPSeries(station, dataType, depth):
 @timeseriesAPI.route("/adcp/<station>/<dataType>/<depth>/<direction>/<timestamp>", methods=["GET"])
 def getADCPTimestamps(station, dataType, depth, direction, timestamp):
 	if not tsParametersAreValid(station, dataType, depth, direction):
-		return jsonify(data=[])
+		return getNotFoundResponse()
 
 	if timestamp == "timestamps":
-		resp = Response(response=db.adcpGetJSONTimestamps(station, dataType, depth, direction), \
+		return Response(response=db.adcpGetJSONTimestamps(station, dataType, depth, direction), \
 			status=200, \
 			mimetype="application/json")
-		return resp
 	
 	try:
 		t = float(timestamp)
 	except:
-		return jsonify(data=[])
+		return getNotFoundResponse()
 	
-	resp = Response(response=db.adcpGetJSONColumn(station, dataType, depth, direction, t), \
-		status=200, \
-		mimetype="application/json")
-	return resp
-
+	resp = db.adcpGetJSONColumn(station, dataType, depth, direction, t)
+	success = True if not (resp is None) else False 
+	return Response(response=resp, status=200, mimetype="application/json") if success else getNotFoundResponse()

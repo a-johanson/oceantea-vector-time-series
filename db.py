@@ -166,24 +166,27 @@ def adcpGetJSONTimestamps(station, dataType, depth, direction):
 	global adcpDB
 	key = adcpGetDBKey(station, dataType, depth, direction)
 	if not (key in adcpDB):
-		return json.dumps({"data":[]})
+		return json.dumps({"timestamps":[]})
 	
 	dataSet = adcpLoad(station, dataType, depth, direction, 1 + 2*adcpDB[key]["nBins"])
-	return json.dumps({"data": dataSet[:,0].tolist()})
+	return json.dumps({"timestamps": dataSet[:,0].astype("int").tolist()})
 
 
 def adcpGetJSONColumn(station, dataType, depth, direction, timestamp):
 	global adcpDB
 	key = adcpGetDBKey(station, dataType, depth, direction)
 	if not (key in adcpDB):
-		return json.dumps({"data":[]})
+		return None
 	
 	# TODO: Caching will become necessary because loading the npy file each time is probably too slow.
-	dataSet = adcpLoad(station, dataType, depth, direction, 1 + 2*adcpDB[key]["nBins"])
+	nBins = adcpDB[key]["nBins"]
+	dataSet = adcpLoad(station, dataType, depth, direction, 1 + 2*nBins)
 	index = np.searchsorted(dataSet[:,0], timestamp, side="left")
 	if index >= dataSet.shape[0]:
 		index = dataSet.shape[0] - 1
-	return json.dumps({"data": np.nan_to_num(dataSet[index,:]).tolist()})
+	return json.dumps({"timestamp": int(dataSet[index,0]), \
+		"directions": np.nan_to_num(dataSet[index,1:(1+nBins)]).tolist(), \
+		"magnitudes": np.nan_to_num(dataSet[index,(1+nBins):(1+2*nBins)]).tolist()})
 
 
 def getStationsDB():
