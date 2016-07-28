@@ -27,8 +27,6 @@ timeseriesAPI = Blueprint("timeseriesAPI", __name__)
 
 @timeseriesAPI.route("/", methods=["GET"])
 @timeseriesAPI.route("", methods=["GET"])
-@timeseriesAPI.route("/adcp/", methods=["GET"])
-@timeseriesAPI.route("/adcp", methods=["GET"])
 def getTimeseries():
 	timeseries = []
 	tsDB = db.getTSDB()
@@ -56,6 +54,17 @@ def getTimeseries():
 		}), status=200, mimetype="application/json")
 	else:
 		return Response(response=json.dumps({"timeseries": timeseries}), status=200, mimetype="application/json")
+
+
+@timeseriesAPI.route("/adcp/", methods=["GET"])
+@timeseriesAPI.route("/adcp", methods=["GET"])
+def getTimeseriesBothDirections():
+	timeseries = []
+	tsDB = db.getTSDB()
+	for ts in tsDB:
+		timeseries.append(tsDB[ts])
+	return Response(response=json.dumps({"timeseries": timeseries}), status=200, mimetype="application/json")
+
 
 def isInt(str):
 	try: 
