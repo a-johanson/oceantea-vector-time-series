@@ -9,4 +9,4 @@ RUN conda install numpy flask -y
 COPY . /usr/src/app
 
 EXPOSE 3336
-CMD ["python3","server.py"]
+CMD ["python3","server.py","--acceptAllHosts"]

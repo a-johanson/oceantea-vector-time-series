@@ -15,6 +15,7 @@
 from flask import Flask
 from timeseries import timeseriesAPI
 from upload import uploadAPI
+import sys
 
 
 app = Flask(__name__)
@@ -26,6 +27,10 @@ app.register_blueprint(uploadAPI, url_prefix="/upload")
 
 
 if __name__ == '__main__':
-    #app.run(host='0.0.0.0')
-    app.run(threaded=True, port=3336, use_debugger=False, use_reloader=False)
+    acceptAllHosts = False
+    for arg in sys.argv:
+        if arg == "--acceptAllHosts":
+            acceptAllHosts = True
+    
+    app.run(host="0.0.0.0" if acceptAllHosts else "127.0.0.1", port=3336, threaded=True, use_debugger=False, use_reloader=False)
  
