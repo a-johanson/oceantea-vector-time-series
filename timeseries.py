@@ -12,16 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from flask import Blueprint
-from flask import Response
-from flask import request
-from flask import jsonify
+from flask import Blueprint, Response, request, jsonify
 from io import BytesIO
 import json
 import re
 import copy
 
 import db
+from auth import isAuth
 
 timeseriesAPI = Blueprint("timeseriesAPI", __name__)
 
@@ -90,6 +88,9 @@ def tsParametersAreValid(station, dataType, depth, direction=None):
 @timeseriesAPI.route("/adcp/<station>/<dataType>/<depth>", defaults={"direction": None}, methods=["DELETE"])
 @timeseriesAPI.route("/adcp/<station>/<dataType>/<depth>/<direction>", methods=["DELETE"])
 def deleteADCPData(station, dataType, depth, direction):
+	if not isAuth(request.headers):
+		return jsonify(success=False, message="Forbidden"), 403
+	
 	result = False
 	if tsParametersAreValid(station, dataType, depth, direction):
 		if direction is None:

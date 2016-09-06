@@ -12,9 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from flask import Blueprint
-from flask import request
-from flask import jsonify
+from flask import Blueprint, request, jsonify
 import re
 
 import db
@@ -42,6 +40,9 @@ def isFloat(str, min, max):
 @uploadAPI.route("/", methods=["POST"])
 @uploadAPI.route("", methods=["POST"])
 def uploadADCPData():
+	if not isAuth(request.headers):
+		return jsonify(success=False, message="Forbidden"), 403
+	
 	if not ("dataFile" in request.files and \
 	"timeSeriesType" in request.form and \
 	"station" in request.form and \
